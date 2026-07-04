@@ -1,0 +1,96 @@
+{
+  "$schema": "https://rasa-os.github.io/schema/rasa.schema.v1.json",
+  "contract_version": "1.3.0",
+  "name": "rasa.module.notes",
+  "version": "0.1.0",
+  "kind": "module",
+  "aliases": [
+    "module-notes"
+  ],
+  "description": "Portable institutional-memory workflow: the three-tier working-note -> durable decision-log -> canon promotion pipeline that domain-writer, domain-code, and this workspace each reinvented independently. Human-authored, git-versioned markdown ledgers, read start-to-finish and ratified by a person — distinct from the kernel's similarity-recall memory (which module.ingest wraps). The one thing that varies per project — where a promoted decision lands and what the promotion criteria are — is delegated to a project-owned .claude/notes-canon.md.",
+  "source": {
+    "repo": "https://github.com/RasaOS/module-notes",
+    "branch": "main"
+  },
+  "tier": "Pro",
+  "capabilities": [
+    "notes.working-capture",
+    "notes.decision-log",
+    "notes.canon-promotion",
+    "notes.institutional-memory"
+  ],
+  "permissions": [
+    "fs:read",
+    "fs:write"
+  ],
+  "requires": {
+    "parent_kind": [
+      "domain",
+      "orchestrator"
+    ]
+  },
+  "rasa": {
+    "role": "L1-mountable-capability",
+    "shape_pattern": "toolkit",
+    "note": "The Element-layer institutional-memory module — the human-authored, git-versioned counterpart to the kernel's similarity-recall memory (which rasa.module.ingest wraps). Distilled from three independent RasaOS reimplementations of the SAME three-tier promotion pipeline: domain-writer (seed/ledgers/decisions.md -> bible canon, with an explicit open-question -> decision -> canon chain), domain-code (/decision + /lessons + /codify -> CLAUDE.md / task-rules), and this workspace itself (working notes -> AUDIT + decision records -> canon amendments). The spine is the PROMOTION DISCIPLINE: a working note (cheap, transient, unratified) graduates to a durable decision ('recorded so it isn't re-litigated' — append-only, ordered, ratified, with a stated basis) which may graduate to canon (the project's authoritative layer). The ONE genuinely per-project concern — WHERE a promoted decision lands (which authoritative file) and what the project's promotion criteria + decision categories are — lives in the project-owned .claude/notes-canon.md seam; the promote step HARD-STOPS if it is unfilled (guessing where a decision becomes law is the one inference the module refuses to make). Cross-references are SOFT: the kernel similarity-recall memory (reached via module.ingest /remember + the injected memory_store tool) is the retrieval-optimized SIBLING for facts recalled by meaning, NOT a dependency and NOT the same primitive; module.tasks (AUDIT.md linkage) and module.jobs (scheduled retro) are conveniences, present-if-mounted. HONEST SCOPE: v0.1.0 ships the spine (notes-rules.md), the specification (content/BUILD_PLAN.md), the seam template, and the ledger templates. The /note, /decide, /promote, and /notes skills are the authoring build phase, gated per BUILD_PLAN.md M-1..M-3 and deliberately held until a real second consumer declares the module in requires.elements[] (the module.tasks extract-after-proof precedent).",
+    "convergence": "Distills the institutional-memory primitive found across the 2026-07-04 cross-vertical admin-primitive survey. Sole wave-2 candidate that cleared both the portfolio synthesis and the adversarial critic: genuinely convergent (three matching reimplementations, structurally identical three-tier lifecycle), zero kernel dependency, thin-but-real seam. See canon workspace CHANGELOG 2026-07-04 + memory universal-admin-primitives-and-wave2-verdict."
+  },
+  "element": {
+    "description": "Element-owned files mirrored into the install target's .claude/ per canon ELEMENT_CONTRACT.md §7. Refreshed on Element upgrade. The notes-canon seam and the ledgers are NOT here — they are project-owned (see seed.files).",
+    "files": [
+      {
+        "from": "content/notes-rules.md",
+        "to": ".claude/notes-rules.md",
+        "policy": "file-replace",
+        "note": "The portable institutional-memory spine: the three tiers (working / decision / canon), the promotion discipline and criteria, the boundary against the kernel's similarity-recall memory, append-only + ratification rules, and the ledger conventions. Element-owned; refreshed on upgrade. References .claude/notes-canon.md for the project's canon target + promotion policy; it hardcodes neither."
+      },
+      {
+        "from": "content/README.md",
+        "to": "content/README.md",
+        "policy": "opt-in",
+        "note": "Describes what this module ships and how it installs. Fork/author-time doc; not installed into consumer projects."
+      },
+      {
+        "from": "content/BUILD_PLAN.md",
+        "to": "content/BUILD_PLAN.md",
+        "policy": "opt-in",
+        "note": "The v0.1.0 specification + build plan (entity model, the three-tier pipeline, the four MVP skill contracts, the notes-canon seam, the kernel-memory boundary, deferred scope, the extract-after-proof gate). Author-time doc; not installed into consumer projects."
+      }
+    ]
+  },
+  "seed": {
+    "description": "One-time, project-owned files copied at install only (skip-if-exists), per canon ELEMENT_CONTRACT.md §7. These belong to the consuming project after install and are never overwritten on Element upgrade — the project's notes-canon adapter seam and its live ledgers.",
+    "files": [
+      {
+        "from": "seed/notes-canon.md.template",
+        "to": ".claude/notes-canon.md",
+        "policy": "skip-if-exists",
+        "note": "The per-project adapter seam — the ONE thing that varies per vertical: where a promoted decision lands (the project's authoritative/canon file), the project's decision categories, and the promotion criteria (what makes a working note earn durable-decision status, and a decision earn canon status). Project-owned; the project fills it. /promote hard-stops until it is set. Ships with honest defaults + commented examples; placeholder-free per the documented skip-if-exists policy gap."
+      },
+      {
+        "from": "seed/notes/DECISIONS.md.template",
+        "to": "notes/DECISIONS.md",
+        "policy": "skip-if-exists",
+        "note": "The durable decision-log ledger (tier 2) — append-only, ordered, one row per ratified decision with basis + category + date + optional promoted-to pointer. 'The project's institutional memory; recorded so it isn't re-litigated.' Project-owned; grows over the project's life."
+      },
+      {
+        "from": "seed/notes/WORKING.md.template",
+        "to": "notes/WORKING.md",
+        "policy": "skip-if-exists",
+        "note": "The working-notes ledger (tier 1) — cheap, transient, unratified running notes (meeting notes, call notes, open threads, half-formed thoughts). Rolls to notes/archive/ when stale. Project-owned; distinct from durable decisions."
+      },
+      {
+        "from": "seed/rasa.lock.json.template",
+        "to": ".claude/rasa.lock.json",
+        "policy": "init-only-with-sha",
+        "note": "Stamped with the Element HEAD commit SHA at init time. Lockfile shape per canon Spec §6 (Connection Contract). When co-installed under a parent that also stamps a lockfile, the parent's is authoritative (single-writer-per-path, Lock L-004). Substitutes {{ELEMENT_NAME}}, {{ELEMENT_KIND}}, {{ELEMENT_VERSION}}, {{ELEMENT_REPO}}, {{ELEMENT_BRANCH}}, {{ELEMENT_SHA}}, {{TODAY}} via bin/init."
+      }
+    ]
+  },
+  "scaffold": {
+    "description": "Empty directories created at init by the declarative installer.",
+    "directories": [
+      "notes/archive"
+    ]
+  }
+}

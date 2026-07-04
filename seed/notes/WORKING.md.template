@@ -1,0 +1,18 @@
+# Working notes — {{PROJECT}}
+
+Tier 1: cheap, transient thinking. Meeting notes, call notes, open threads,
+"look at this later." **Not commitments** — nothing downstream is gated on
+these. This is the raw material `/decide` promotes from.
+
+Managed by `rasa.module.notes` (`/note` appends). Roll stale sections to
+`notes/archive/<YYYY-MM>.md` when this file gets long — never delete.
+Read `.claude/notes-rules.md` for the tier model.
+
+---
+
+## {{TODAY}}
+
+- (example) Weighing per-element vs global vector index — leaning per-element
+  for tenant isolation, need to confirm the cost. → if it holds, `/decide` it.
+
+<!-- Append dated headings as you go. Delete the example once you have real notes. -->

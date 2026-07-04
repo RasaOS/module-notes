@@ -1,0 +1,27 @@
+# Decisions — {{PROJECT}}
+
+The project's durable decision-log (tier 2). **Recorded so it isn't
+re-litigated.** Append-only, ordered, ratified. Never rewrite an entry —
+supersede it by appending a new one and adding a `Superseded-by:` line to
+the old.
+
+Managed by `rasa.module.notes` (`/decide` appends; `/promote` adds
+`Promoted-to:` pointers). Read `.claude/notes-rules.md` for the discipline.
+
+---
+
+<!-- Newest at the bottom. One entry per ratified decision. Example shape: -->
+
+## DEC-001 — (example) Ledgers are markdown, not a database
+
+- **Category:** architecture
+- **Date:** {{TODAY}}
+- **Decision:** Institutional memory lives in git-versioned markdown read
+  start-to-finish, not in a queryable store.
+- **Why:** the value is provenance and non-relitigation for a human reader;
+  similarity-recall of facts is a different primitive (kernel memory /
+  module.ingest). Ordered human-readable history beats query here.
+- **Promoted-to:** (none)
+- **Superseded-by:** (none)
+
+<!-- Delete the example above once you file your first real decision. -->

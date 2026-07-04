@@ -1,0 +1,67 @@
+# Notes canon — project adapter seam
+
+This file is **project-owned**. `rasa.module.notes` copies it once at
+install (`skip-if-exists`) and never overwrites it. It is the one thing the
+module cannot know for you: **where a promoted decision becomes law in
+THIS project, and what your promotion rules are.**
+
+`/promote` reads this file and **hard-stops** if `canon_target` is unset —
+guessing where a decision becomes authoritative is the one inference the
+module refuses to make.
+
+Fill in the three sections. Honest defaults are shown; replace them.
+
+---
+
+## canon_target
+
+Where a promoted decision lands — the project's authoritative layer.
+One or more files/dirs. Examples from real RasaOS verticals:
+
+- fiction project:   `bible/`            (world facts all drafting obeys)
+- software project:  `CLAUDE.md`         (or `.claude/task-rules.md`)
+- this workspace:    `canon/<version>/canon/`
+
+```
+canon_target:
+  # - CLAUDE.md
+  # - docs/decisions/
+```
+
+(Leave commented / empty until you set it. `/promote` will refuse until at
+least one target is present.)
+
+---
+
+## categories
+
+The decision categories for tier-2 `notes/DECISIONS.md`. `/decide` requires
+one per decision. Defaults to `general` if you leave this empty. Real
+examples:
+
+- writer: `canon | character | plot | voice | period | structure | process`
+- code:   `architecture | process | tooling | convention | dependency`
+
+```
+categories:
+  - general
+```
+
+---
+
+## promotion_criteria
+
+Optional. Overrides the module's defaults (in `.claude/notes-rules.md`):
+"working → decision when questioned-and-held; decision → canon when
+stable-and-depended-on." Add a project hard-gate here if promotion has one.
+
+Example hard-gate (this workspace's rule):
+
+```
+promotion_criteria:
+  decision_to_canon:
+    hard_gate: "A canon change requires a canon task in canon/tasks/ first.
+                /promote must refuse and point at the task workflow."
+```
+
+Leave empty to use the defaults.
