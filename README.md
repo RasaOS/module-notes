@@ -5,7 +5,7 @@
 **Kind:** `module` (canon Spec §6)
 **Contract:** Element Contract v1.3.0
 **Version:** 0.1.0 (spine + spec + seam; skills are the build phase)
-**Status:** Local, not pushed. Skill build gated on a real second consumer.
+**Status:** Pushed — [RasaOS/module-notes](https://github.com/RasaOS/module-notes) (public). Skill build gated on a real second consumer.
 
 ## What this is
 

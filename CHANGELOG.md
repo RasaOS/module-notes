@@ -48,6 +48,7 @@ to the toolkit-module shape, mirroring `module-ingest`.
 
 ### Notes
 
-- `check-manifest` GREEN.
-- Local commit + tag `v0.1.0`. **Not pushed** (workspace rule; the user
-  pushes). Not yet registered as a GitHub repo.
+- `check-manifest` GREEN; `bin/conformance` 41/41.
+- Committed + tagged `v0.1.0`; **pushed PUBLIC** to
+  [RasaOS/module-notes](https://github.com/RasaOS/module-notes) (2026-07-04;
+  remote HEAD == local + visibility verified).

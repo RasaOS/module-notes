@@ -181,7 +181,7 @@ premature-abstraction trap that `module.billing` is deferred to avoid.
 ## Version plan
 
 - **v0.1.0 (this)** — spine (`notes-rules.md`) + spec (this file) + seam
-  template + ledger templates. No skills. Local, not pushed.
+  template + ledger templates. No skills. Pushed public (RasaOS/module-notes).
 - **v0.2.0** — M-1..M-3 skills authored, once a second consumer declares
   the module. `bin/init` smoke-tested into that consumer. Push then.
 - **v1.0.0** — the seam format + install shape locked after the pipeline
