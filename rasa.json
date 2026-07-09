@@ -2,7 +2,7 @@
   "$schema": "https://rasa-os.github.io/schema/rasa.schema.v1.json",
   "contract_version": "1.3.0",
   "name": "rasa.module.notes",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "kind": "module",
   "aliases": [
     "module-notes"
@@ -33,7 +33,13 @@
     "role": "L1-mountable-capability",
     "shape_pattern": "toolkit",
     "note": "The Element-layer institutional-memory module — the human-authored, git-versioned counterpart to the kernel's similarity-recall memory (which rasa.module.ingest wraps). Distilled from three independent RasaOS reimplementations of the SAME three-tier promotion pipeline: domain-writer (seed/ledgers/decisions.md -> bible canon, with an explicit open-question -> decision -> canon chain), domain-code (/decision + /lessons + /codify -> CLAUDE.md / task-rules), and this workspace itself (working notes -> AUDIT + decision records -> canon amendments). The spine is the PROMOTION DISCIPLINE: a working note (cheap, transient, unratified) graduates to a durable decision ('recorded so it isn't re-litigated' — append-only, ordered, ratified, with a stated basis) which may graduate to canon (the project's authoritative layer). The ONE genuinely per-project concern — WHERE a promoted decision lands (which authoritative file) and what the project's promotion criteria + decision categories are — lives in the project-owned .claude/notes-canon.md seam; the promote step HARD-STOPS if it is unfilled (guessing where a decision becomes law is the one inference the module refuses to make). Cross-references are SOFT: the kernel similarity-recall memory (reached via module.ingest /remember + the injected memory_store tool) is the retrieval-optimized SIBLING for facts recalled by meaning, NOT a dependency and NOT the same primitive; module.tasks (AUDIT.md linkage) and module.jobs (scheduled retro) are conveniences, present-if-mounted. HONEST SCOPE: v0.1.0 ships the spine (notes-rules.md), the specification (content/BUILD_PLAN.md), the seam template, and the ledger templates. The /note, /decide, /promote, and /notes skills are the authoring build phase, gated per BUILD_PLAN.md M-1..M-3 and deliberately held until a real second consumer declares the module in requires.elements[] (the module.tasks extract-after-proof precedent).",
-    "convergence": "Distills the institutional-memory primitive found across the 2026-07-04 cross-vertical admin-primitive survey. Sole wave-2 candidate that cleared both the portfolio synthesis and the adversarial critic: genuinely convergent (three matching reimplementations, structurally identical three-tier lifecycle), zero kernel dependency, thin-but-real seam. See canon workspace CHANGELOG 2026-07-04 + memory universal-admin-primitives-and-wave2-verdict."
+    "convergence": "Distills the institutional-memory primitive found across the 2026-07-04 cross-vertical admin-primitive survey. Sole wave-2 candidate that cleared both the portfolio synthesis and the adversarial critic: genuinely convergent (three matching reimplementations, structurally identical three-tier lifecycle), zero kernel dependency, thin-but-real seam. See canon workspace CHANGELOG 2026-07-04 + memory universal-admin-primitives-and-wave2-verdict.",
+    "identity": {
+      "one_liner": "the RasaOS module for institutional-memory notes",
+      "role": "module",
+      "subject": "institutional-memory notes / decision ledgers",
+      "goal": "bring institutional-memory notes / decision ledgers into a project as an installable RasaOS module"
+    }
   },
   "element": {
     "description": "Element-owned files mirrored into the install target's .claude/ per canon ELEMENT_CONTRACT.md §7. Refreshed on Element upgrade. The notes-canon seam and the ledgers are NOT here — they are project-owned (see seed.files).",
@@ -102,6 +108,12 @@
         "to": ".claude/rasa.lock.json",
         "policy": "init-only-with-sha",
         "note": "Stamped with the Element HEAD commit SHA at init time. Lockfile shape per canon Spec §6 (Connection Contract). When co-installed under a parent that also stamps a lockfile, the parent's is authoritative (single-writer-per-path, Lock L-004). Substitutes {{ELEMENT_NAME}}, {{ELEMENT_KIND}}, {{ELEMENT_VERSION}}, {{ELEMENT_REPO}}, {{ELEMENT_BRANCH}}, {{ELEMENT_SHA}}, {{TODAY}} via bin/init."
+      },
+      {
+        "from": "seed/rasa-deployment.md.template",
+        "to": ".claude/rasa-deployment.md",
+        "policy": "skip-if-exists",
+        "note": "The DEPLOYMENT identity layer (SA-025) — project-owned; what this project is, for whom, on what platform. bin/init generates the element layer (.claude/rasa-identity.md) from rasa.identity every install."
       }
     ]
   },
