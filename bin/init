@@ -150,7 +150,9 @@ for entry in manifest.get('element', {}).get('files', []):
             errors.append("directory-mirror 'from' is not a directory: %s" % entry['from'])
             continue
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copytree(src, dst, dirs_exist_ok=True)
+        # never ship bytecode or editor cruft, whatever is on the author's disk
+        shutil.copytree(src, dst, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store"))
         print("    · mirror: %s" % entry['to'])
     elif policy == 'file-replace':
         if not os.path.isfile(src):

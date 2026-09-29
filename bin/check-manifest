@@ -620,7 +620,20 @@ def family_checks(report, paths, entries, manifest):
         elif not os.access(full, os.X_OK):
             problems.append("content/bin/%s is not executable (chmod +x); an install would land a "
                             "program nobody can run" % prog)
-    report.check("executables   the installed programs are executable", problems)
+    # The inventory never walks __pycache__, so bytecode an author's run left under
+    # content/ would ship via directory-mirror unseen. Look for it directly.
+    for tree in ("content", "seed"):
+        for dirpath, dirnames, filenames in os.walk(os.path.join(REPO_ROOT, tree)):
+            for d in dirnames:
+                if d == "__pycache__":
+                    problems.append("%s/ — bytecode on disk would be installed; delete it (run "
+                                    "Python with -B)" % os.path.relpath(os.path.join(dirpath, d),
+                                                                       REPO_ROOT))
+            for f in filenames:
+                if f.endswith((".pyc", ".pyo")):
+                    problems.append("%s — bytecode would be installed" % os.path.relpath(
+                        os.path.join(dirpath, f), REPO_ROOT))
+    report.check("executables   the programs are executable; no bytecode ships", problems)
 
 
 def run_tests(report):

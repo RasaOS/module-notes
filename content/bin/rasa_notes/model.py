@@ -167,7 +167,7 @@ class Ctx(object):
 
     def write(self, abs_path, fm, body, schema, info=None):
         """Render, self-validate, and atomically write one record. -> text."""
-        text = R.render_record(fm, body, schema, info)
+        text = R.verify_roundtrip(R.render_record(fm, body, schema, info), fm)
         problems = R.schema_errors(schema, fm)
         if problems:
             inv, path, msg = problems[0]

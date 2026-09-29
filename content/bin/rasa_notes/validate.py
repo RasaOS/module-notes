@@ -75,7 +75,8 @@ def run(ctx, fix=False):
     R.check_history_common(usable, rows, exists, report,
                            module_ids_ok=lambda rid: R.ref_prefix(rid) in M.PREFIX_TYPE,
                            place_of=M.Ctx.place_of, rel_of=ctx.rel_of, history_rel=hrel,
-                           cli=M.CLI, fixes=fixes)
+                           cli=M.CLI, fixes=fixes,
+                           present_ids=R.ids_on_disk(records))
     for row in rows:
         if R.ref_prefix(row.id) not in M.PREFIX_TYPE:
             report.error("F-13", "%s does not belong to notes" % row.id, where=hrel,

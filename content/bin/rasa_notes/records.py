@@ -45,7 +45,7 @@ except ImportError:  # pragma: no cover - the family requires 3.9, this is belt 
     _zoneinfo = None
 
 FAMILY = "records-family/1"
-CORE_VERSION = "1.0.0"
+CORE_VERSION = "1.0.1"
 
 # ---------------------------------------------------------------------------
 # The family registry
@@ -492,6 +492,9 @@ def parse_scalar(text, lineno, flow=False):
     return t, None
 
 
+_RX_QUOTE_OPENS = re.compile(r"^\s*(?:[a-z][a-z0-9_]*:\s+)?$")
+
+
 def _split_flow(inner, lineno):
     """Split the inside of [..] or {..} on top-level commas. -> (parts, error)."""
     parts, buf, i, quote = [], [], 0, None
@@ -511,7 +514,10 @@ def _split_flow(inner, lineno):
                 quote = None
             i += 1
             continue
-        if c in ("'", '"') and "".join(buf).strip() == "":
+        if c in ("'", '"') and _RX_QUOTE_OPENS.match("".join(buf)):
+            # a quote opens a value at the start of an item, or right after the
+            # 'key: ' of a flow-map entry (core 1.0.1: before, only the former,
+            # so a quoted map value holding ',' could be written but not read)
             quote = c
             buf.append(c)
             i += 1
@@ -828,6 +834,38 @@ def render_record(fm, body, schema=None, info=None):
     text = dump_frontmatter(fm, schema, info) + body
     if not text.endswith("\n"):
         text += "\n"
+    return text
+
+
+def _plain(v):
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, int):
+        return str(v)
+    if isinstance(v, list):
+        return [_plain(x) for x in v]
+    if isinstance(v, dict):
+        return OrderedDict((k, _plain(x)) for k, x in v.items())
+    return v
+
+
+def verify_roundtrip(text, fm):
+    """Refuse a rendered record that would not read back as exactly `fm`.
+
+    The last guard before a write: whatever the serializer does, the file on
+    disk must parse, under this grammar, to the values the tool meant.
+    """
+    fm_lines, first, _body, _bf, err = split_frontmatter(text)
+    if err:
+        raise Refusal("internal: the rendered record has no frontmatter (%s)" % err[1])
+    values, _info, errors = parse_mapping(fm_lines, first)
+    if errors:
+        raise Refusal("internal: the rendered record does not parse (line %s: %s)" % errors[0])
+    want = json.dumps(_plain(fm), sort_keys=True)
+    got = json.dumps(values, sort_keys=True)
+    if want != got:
+        raise Refusal("internal: the rendered record would not read back as written; "
+                      "nothing was written")
     return text
 
 
@@ -1855,6 +1893,19 @@ def check_record_common(rec, schema, report, where, actors=None, today_=None):
     return True
 
 
+def ids_on_disk(records):
+    """Every id a scanned file claims: its frontmatter id, else the id its name starts with."""
+    out = set()
+    for r in records:
+        rid = r.id
+        if not rid:
+            m = _RX_FILE_ID.match(r.stem) or _RX_TASK_FILE.match(r.stem)
+            rid = m.group(1) if m else (r.stem if RX_ACCT_ID.match(r.stem) else None)
+        if rid:
+            out.add(rid)
+    return out
+
+
 def check_unique_ids(records, report, rel_of):
     """F-08."""
     seen = OrderedDict()
@@ -1869,8 +1920,12 @@ def check_unique_ids(records, report, rel_of):
 
 
 def check_history_common(records, rows, exists, report, module_ids_ok, place_of, rel_of,
-                         history_rel, cli, fixes=None):
-    """F-15, F-16, F-17 (F-13/F-14 come from load_history)."""
+                         history_rel, cli, fixes=None, present_ids=None):
+    """F-15, F-16, F-17 (F-13/F-14 come from load_history).
+
+    present_ids: every id on disk, including files too broken to validate —
+    so a file that fails to parse is reported for what it is, not as gone.
+    """
     if not exists:
         if records:
             report.error("F-15", "%s is absent; %d record(s) have no filing line"
@@ -1910,6 +1965,8 @@ def check_history_common(records, rows, exists, report, module_ids_ok, place_of,
                          fix="%s check --fix  (appends a 'reconcile' line)" % cli, fixable=True)
             if fixes is not None:
                 fixes.append(("reconcile", r))
+    if present_ids is not None:
+        on_disk |= set(present_ids)
     for rid, hist in by_id.items():
         if rid not in on_disk and module_ids_ok(rid):
             report.warn("F-17", "%s was filed (line %s) but its file is gone; ids are never "

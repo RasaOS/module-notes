@@ -18,6 +18,25 @@ notes module, and to build it to the `rasa.module.tasks` v1.0.0 standard.
 Built together with `rasa.module.schedule` 0.2.0, `rasa.module.crm` 0.2.0 and
 the new `rasa.module.messages` 0.1.0 as one family.
 
+### Family core 1.0.1
+
+Ships `records.py` **1.0.1**, byte-identical in notes, schedule, crm and
+messages. Two defects were found while the family was built, and fixed in
+all four at once rather than worked around in one:
+
+- a quoted flow-map value holding `,` `[` `]` `{` `}` (a street "Suite 5,
+  Floor 2", a name "Doe, Jane") was written but could not be read back —
+  found independently by the crm and messages builds;
+- a file too broken to parse was also reported as deleted (F-17); it is now
+  reported only for what is wrong with it.
+
+Every write path now proves the rendered record reads back exactly as
+written (`R.verify_roundtrip`) before it touches the disk. `bin/init` never
+copies bytecode, and the release gate fails if any sits under `content/` or
+`seed/`. Integration run 2026-09-29: all four family modules plus
+`rasa.module.tasks` installed into one project, cross-linked records, every
+validator clean, a hand-deleted contact caught by its referrers.
+
 ### Added
 
 - **Notes** — `notes/<notebook>/NOTE-nnnn-<slug>.md`: notebooks as

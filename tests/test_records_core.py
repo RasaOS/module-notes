@@ -133,6 +133,20 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(json.dumps(v2, sort_keys=True), json.dumps(v, sort_keys=True))
         self.assertEqual(body2, body)
 
+    def test_quoted_map_values_with_flow_characters(self):
+        # core 1.0.1: found by the crm builder — "Suite 5, Floor 2" was written, not read back
+        v, _, errs = parse('addr: {street: "Suite 5, Floor 2", code: "62701"}\n'
+                           "items:\n  - {name: 'a, b [c] {d}', n: \"1\"}\n")
+        self.assertEqual(errs, [])
+        self.assertEqual(v["addr"], {"street": "Suite 5, Floor 2", "code": "62701"})
+        self.assertEqual(v["items"], [{"name": "a, b [c] {d}", "n": "1"}])
+        fm = {"id": "CARD-0001", "address": [{"label": "work", "street": "Suite 5, Floor 2"}],
+              "pinned": True}
+        text = R.render_record(fm, "\n# X\n", SerializerTests.SCHEMA)
+        self.assertEqual(R.verify_roundtrip(text, fm), text)
+        with self.assertRaises(R.Refusal):
+            R.verify_roundtrip(text, dict(fm, id="CARD-0002"))
+
     def test_quoting_rules(self):
         q = R.needs_quote
         for s in ("", " x", "@acct-a", "#x", "- x", "a: b", "a #b", "true", "No", "12",
@@ -447,6 +461,18 @@ class YamlInteropTests(unittest.TestCase):
                 self.assertEqual(errs, [], "%r: our parser rejects our own output %r" % (s, doc))
                 ours = v["k"][0] if flow else v["k"]
                 self.assertEqual(ours, s)
+            # ... and as a flow-map value, in a key line and in a block-list item
+            m = R.dump_scalar(s, flow=True)
+            for doc in ("k: {a: %s, b: z}" % m, "k:\n  - {a: %s, b: z}" % m):
+                got = yaml.safe_load(doc)["k"]
+                got = got[0] if isinstance(got, list) else got
+                if s == "2026-09-28":
+                    got = dict(got, a=str(got["a"]))
+                self.assertEqual(got, {"a": s, "b": "z"}, "%r in %r" % (s, doc))
+                v, _, errs = R.parse_mapping(doc.split("\n"), 1)
+                self.assertEqual(errs, [], "%r: map value %r" % (s, doc))
+                ours = v["k"][0] if isinstance(v["k"], list) else v["k"]
+                self.assertEqual(ours, {"a": s, "b": "z"})
 
 
 if __name__ == "__main__":
