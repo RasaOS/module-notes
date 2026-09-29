@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RasaOS/module-notes/blob/main/content/schemas/config.schema.json",
+  "title": "notes/notes.config.yml — rasa.module.notes (records-family/1)",
+  "description": "What a project declares to rasa.module.notes. Every key except `schema` is optional and a project with no config file is valid, except that `notes canonize` refuses until `canon_target` is declared. Every list follows declare-to-constrain: absent or [] = free; non-empty = closed.",
+  "type": "object",
+  "x-kind": "config",
+  "x-key-order": ["schema", "default_notebook", "journal_notebook", "notebooks", "types", "tags", "categories", "canon_target", "actors", "default_actor"],
+  "required": ["schema"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "rasa.module.notes/1"},
+    "default_notebook": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*){0,2}$", "description": "Where `notes new` files a note with no --in. Default: inbox."},
+    "journal_notebook": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*){0,2}$", "description": "Where `notes today` keeps daily notes. Default: journal."},
+    "notebooks": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*){0,2}$"}, "description": "Declare to constrain: the notebook paths notes may live in."},
+    "types": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "slug"}},
+    "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "slug"}},
+    "categories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "slug"}, "description": "Decision categories. Declared => every decision must carry one of them."},
+    "canon_target": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}, "description": "THE HARD-STOP: where a decision becomes law in this project. `notes canonize` refuses until this is declared."},
+    "actors": {"type": "array", "uniqueItems": true, "items": {"type": "string", "format": "actor"}},
+    "default_actor": {"type": "string", "format": "actor"}
+  }
+}

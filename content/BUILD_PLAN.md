@@ -1,188 +1,137 @@
-# `rasa.module.notes` — Specification & Build Plan
+# `rasa.module.notes` — design record
 
-**Status:** v0.1.0 = spine + spec + seam + ledger templates. The skills are
-the build phase (M-1..M-3 below), deliberately gated.
-
-This is the author-time specification. The installed spine is
-`content/notes-rules.md`; this file is the design record behind it.
+Author-time document; not installed (`opt-in`). The installed law is
+`content/notes-rules.md`; this file is the *why* behind it.
 
 ---
 
-## Why this module exists (and why only this one)
+## 1. What changed in 0.2.0, and why
 
-On 2026-07-04 a cross-vertical survey of the RasaOS substrate asked: which
-administrative primitives do all the verticals reinvent? Institutional
-memory — a **three-tier working → decision → canon promotion pipeline** —
-was found reimplemented independently in:
+**Owner direction, 2026-09-28:** *"we need modules for each of the following…
+notes, calendar events, messages, contacts — we need as much structure and
+organization as we can get."* Asked where general notes should go, the owner
+chose **extend `module.notes`** over a separate `module.notebook` or renaming
+this module to `module.decisions`. Asked how deep, the owner chose the
+**`rasa.module.tasks` v1.0.0 standard**: numbered invariants, JSON Schemas,
+one record per file, an atomic tool, an append-only history, a validator and
+a release gate.
 
-- **domain-writer** — `seed/ledgers/decisions.md` ("the project's
-  institutional memory"; fields Category / Decision / Why / Source /
-  Promoted-to) with an explicit `open-question → decision → canon` chain
-  and a `/promote` skill.
-- **domain-code** — `/decision` (ADRs), `/lessons`, `/regret`, and
-  `/codify` (promotes conversation-emergent rules up into
-  `CLAUDE.md` / `task-rules.md`).
-- **this workspace** — working notes → `AUDIT.md` + decision records →
-  `canon/` amendments (which additionally route through a canon *task*).
+So 0.2.0 does two things:
 
-Unlike the other wave-2 candidates (people, audit, calendar, comms,
-billing), notes was the **only one that cleared both** the portfolio
-synthesis and the adversarial critic, because:
+1. **Tier 1 becomes real notes.** v0.1.x had one `notes/WORKING.md` scratch
+   ledger. Now a note is a first-class record in a notebook: titled, tagged,
+   pinnable, linkable to any record in the family, archivable, and one daily
+   note per day. The working → decision → canon ladder is unchanged — a note
+   *is* the working tier.
+2. **The decision ledger becomes enforced.** v0.1.x described "append-only,
+   never rewritten, superseded not edited" in prose. Now each decision is a
+   frozen file (F-19), supersession is a field on the newer decision with
+   "superseded" derived (N-05), the basis is required (N-04), and canon
+   promotion is a recorded, checked act behind a hard-stop (N-06).
 
-1. **The three source implementations share a *structure*, not just a
-   noun** — the three tiers and the promotion discipline are identical
-   across them. (Contrast people/audit, whose source instances diverge on
-   every load-bearing field.)
-2. **Zero kernel dependency** — it's pure git-versioned markdown, the
-   `module.tasks` precedent, buildable today.
-3. **It's extract-after-proof** — this workspace *is* a live, running
-   instance of the promotion pipeline, so the distillation source has
-   actually run in production (the exact bar `module.tasks` set and the
-   other candidates failed).
+**The extract-after-proof gate.** v0.1.0 held the skills until a real second
+consumer declared the module. That gate was lifted by the owner's direct
+request, not by a consumer appearing — there is still **no installed
+consumer** (every `rasa.lock.json` under the workspace volume and the home
+directory was searched on 2026-09-28). What the gate protected against —
+distilling one instance into a false abstraction — is now carried by the
+v1.0.0 bar below: the shape is not locked until two real projects run it.
 
-## Non-goals (hard boundaries)
+## 2. The records family
 
-- **Not the kernel's similarity-recall memory.** Facts recalled by vector
-  match are `module.ingest` `/remember` / `memory_store` territory. This
-  module is ordered, human-ratified, provenance-first. See the boundary
-  section of `notes-rules.md`.
-- **Not a task tracker.** Open *work* is `module.tasks`. Open *questions*
-  (undecided rulings) live in tier 1 here, but they are not assignable
-  work items.
-- **Not five decision types.** The honest verdict was explicit: ship the
-  `/note` + `/decide` + `/promote` MVP, not domain-code's full
-  decision/postmortem/regret/retro/lesson taxonomy. Those are a project's
-  own categories inside tier 2, not separate skills.
+notes 0.2.0 is one of four modules built together to one standard,
+**records-family/1**:
 
----
+| module | concern | records |
+|---|---|---|
+| `rasa.module.notes` 0.2.0 | notes + decisions | NOTE, DEC |
+| `rasa.module.schedule` 0.2.0 | the calendar (Booking folded into Event) | EVT |
+| `rasa.module.crm` 0.2.0 | the address book + accounts + sales funnel | CARD, acct-, LEAD |
+| `rasa.module.messages` 0.1.0 | email, texts, chat, calls, voicemail, letters | THR, MSG |
 
-## Entity model
+The shared conventions are stated once — the family block in each module's
+rules file, identical in all four — and enforced once, by `records.py`,
+identical in all four. `bin/check-manifest` proves both against the
+`FAMILY` stamp and compares the stamp with every sibling found on disk.
 
-Three project-owned ledgers + one project-owned seam.
+Design choices that apply to all four, and why:
 
-### `notes/WORKING.md` (tier 1)
-Dated headings, freeform bullets. No schema — this is the thinking tier.
-Rolls stale sections to `notes/archive/<YYYY-MM>.md`.
+- **One record, one file, frontmatter + body.** Humans read and edit these
+  in any editor; the tool never has to own the whole file. The tasks survey
+  showed that per-file records with a directory as state stay honest where
+  single ledger files drift.
+- **A strict subset of YAML.** Any YAML tool reads the files; our parser
+  rejects everything outside the subset with a line number. One level of
+  structure (a list of flat maps) is allowed — enough for vCard/iCalendar
+  multi-valued properties, and no deeper. Every value parses as text; the
+  schema says what it must look like, so there is no YAML type guessing.
+  `tests/test_records_core.py` proves PyYAML reads what we write for ~50
+  adversarial scalars in both block and flow context.
+- **JSON Schema as field law.** The schemas are simultaneously the interop
+  artifact (any tool can validate a record) and the enforced law (the
+  validator evaluates them). Cross-record law lives in code.
+- **Ids are the only join key; references are soft and family-wide.** A
+  reference into a mounted sibling must resolve; into an unmounted one it is
+  merely unverifiable. No module requires another.
+- **The history log is the audit trail and the id-retirement ledger.** A
+  project with no version control still has a complete record of every
+  change and never reissues an id.
+- **`updated` is a fact, frozen records are frozen.** A content cache
+  detects edits that did not bump `updated`, and any change to a frozen
+  record.
+- **No network, ever.** These modules hold personal data about other people.
+  Interop is files; sending and syncing belong to Connections (SA-031).
 
-### `notes/DECISIONS.md` (tier 2) — the load-bearing ledger
-Append-only, ordered. One entry per ratified decision:
+## 3. Notes-specific decisions
 
-```
-## DEC-007 — Per-element vector indexes over one global index
-- **Category:** architecture
-- **Date:** 2026-07-01
-- **Decision:** Each element gets its own vector index; no shared global index.
-- **Why:** tenant isolation is a hard requirement; a shared index leaks
-  cross-element retrieval. Cost is N small indexes vs 1 large — acceptable.
-- **Promoted-to:** (none yet)
-- **Superseded-by:** (none)
-```
+| decision | why |
+|---|---|
+| A notebook is a directory; no `notebook:` key | one fact, one home — the filesystem already says where a file is, and moving it is the act of refiling |
+| Depth ≤ 3, lower-case slugs | predictable paths across every operating system and editor |
+| `decisions/`, `_archive/`, `.state/` reserved | the ledger, the archive and the cache are not notebooks |
+| `pinned` is only ever `true` | "to say nothing, omit the key" — `pinned: false` is a second representation of the default |
+| Daily notes are ordinary notes titled by date | no second record type; `notes today` is idempotent |
+| Decisions are frozen from the moment they are recorded | the ledger's value is the chain of custody; an editable ruling is not a ruling |
+| "Superseded" is derived, never written onto the old decision | writing it would edit a frozen record and store one fact twice |
+| `canon_target` lives in config, criteria live in the prose seam | the tool must check the target; only a person can judge the criteria |
+| The tool records canon promotion but never writes canon | canon is the project's most valuable file; an automated edit to it is the one write this module will not make |
+| Similarity recall stays out | the kernel's memory (via `rasa.module.ingest`) is a different primitive; notes is ordered and ratified |
 
-Rules: never rewrite; supersede by appending a new entry + a `Superseded-by:`
-line on the old. `DEC-NNN` monotonic, never reused. Dates absolute.
+## 4. Invariant map
 
-### canon (tier 3) — project-owned target, named by the seam
-Not a ledger this module ships. The seam points at wherever the project
-keeps its authoritative layer.
+| id | rule | where |
+|---|---|---|
+| F-01…F-27 | the family conventions | `records.py`, family block |
+| N-01 | a note lives in a well-formed notebook (not the root, not `decisions/`, depth ≤ 3) | `validate.check_note` |
+| N-02 | declared notebooks are closed | `validate.check_note` |
+| N-03 | decisions live only in `decisions/`, never archived | `validate.check_decision_local` |
+| N-04 | `## Basis` present and non-empty | `validate.check_decision_local` |
+| N-05 | supersedes resolve, point backwards, never self, one successor, no loop | `validate.check_decision_graph` |
+| N-06 | promotion stamped together, inside a declared target, dated sanely | schema `allOf` + `validate.check_decision_local` |
+| N-07 | declared categories are required and closed | `validate.check_decision_local` |
+| N-08 | `pinned` is only `true` | schema `const` + `validate.check_note` |
+| N-09 | one daily note per date | `validate.check_journal` |
+| N-10 | a note is not about itself | `validate.check_note` |
 
-### `.claude/notes-canon.md` (the seam) — the one per-project thing
-See "The adapter seam" below.
+## 5. Deferred, deliberately
 
----
+- **Note templates** (meeting / call / 1:1 skeletons). Useful, but project
+  vocabulary; a project can keep them in its own notebook today.
+- **Attachments.** Notes link files by path in the body; a managed
+  attachment store is not in scope.
+- **Encrypted / locked notes.** Needs a key-management answer the substrate
+  does not have yet.
+- **Migration from 0.1.x ledgers** (`notes/WORKING.md`, `notes/DECISIONS.md`).
+  No consumer ever installed 0.1.x, so there is nothing to migrate. If one
+  surfaces, the conversion is mechanical: each WORKING section → a note in
+  `inbox/`, each DECISIONS entry → a `DEC` file.
 
-## The adapter seam — `.claude/notes-canon.md`
+## 6. Version plan
 
-The crux of the design, mirroring `module.tasks`' done-gate and
-`module.ingest`' ingest-gate. It holds the three things that genuinely vary
-per vertical:
-
-1. **`canon_target`** — the file(s) a promoted decision lands in
-   (`bible/`, `CLAUDE.md`, `canon/…`). Without it, `/promote` hard-stops.
-2. **`categories`** — the project's tier-2 decision categories (writer:
-   canon|character|plot|voice|…; code: architecture|process|tooling|…;
-   default: `general`).
-3. **`promotion_criteria`** — optional project overrides of the default
-   "questioned-and-held → decision; stable-and-depended-on → canon" rules.
-   May encode a hard gate (this workspace's canon promotion requires a
-   canon *task* first — the seam is where that rule lives).
-
-Why a seam and not fixed logic: "what counts as canon and where it lives"
-is exactly the vertical moat — the same reason `module.people`'s taxonomy
-and `module.audit`'s rule-pack are seams. The horizontal core is the
-*promotion discipline*; the vertical part is *what you're promoting into*.
-
-**Honest note on the seam paradox** (flagged by the wave-2 critic): pushing
-the canon target into the seam is correct, but it means the module's
-horizontal core is "the three-tier discipline + ordered append-only
-ledgers", not the canon logic. That core is load-bearing *here* (the
-discipline is the reinvented thing) in a way it may not be for the deferred
-modules — which is precisely why notes ships and they wait.
-
----
-
-## Skills (the build phase — M-1..M-3)
-
-Four skills, MVP-scoped. Each is a thin driver over the ledgers + seam; the
-discipline lives in `notes-rules.md`, not duplicated per skill.
-
-### M-1 — `/note` and `/notes`
-- **`/note <text>`** — append a tier-1 working note under today's heading in
-  `notes/WORKING.md`. Zero ceremony. No ratification. The fast path.
-- **`/notes [working|decisions|search <term>]`** — read/list the ledgers.
-  Default: recent working notes + recent decisions. `search` greps both.
-  Read-only.
-
-### M-2 — `/decide`
-- **`/decide <ruling>`** — promote a thought (or capture a fresh ruling)
-  into tier-2 `notes/DECISIONS.md`. MUST collect a **basis** (refuse to
-  file without one — "a decision without a basis is a working note") and a
-  **category** (from the seam's list). Assigns the next `DEC-NNN`. Stages
-  the entry and asks the human to **ratify** before writing (never
-  auto-commits). If superseding a prior decision, appends the new entry and
-  adds `Superseded-by:` to the old.
-
-### M-3 — `/promote`
-- **`/promote DEC-NNN`** — graduate a tier-2 decision to canon. Reads
-  `.claude/notes-canon.md`; **hard-stops if the seam is unfilled or has no
-  `canon_target`**. Checks the decision against the project's
-  `promotion_criteria` (default: stable + depended-on). Stages the edit to
-  the canon target + a `Promoted-to:` pointer on the DEC row, and asks the
-  human to ratify. Honors any project hard-gate (e.g. "canon needs a task
-  first" → refuses and points at the task workflow).
-
-**Style/quality bar:** match `module.ingest`'s SKILL.md files — a crisp
-operation list, honest error/hard-stop behavior, no invented plumbing.
-Fan-out plan: author `/decide` as the reference skill, then `/note`+`/notes`
-and `/promote` in parallel against it, gate each independently (the
-four-engineering-modules build pattern).
-
----
-
-## The gate — when to build the skills
-
-Per the honest wave-2 verdict, hold the skill build until **one real second
-consumer** wants it — a domain or orchestrator that adds
-`rasa.module.notes` to its `requires.elements[]`. The natural first
-consumers:
-
-- **this workspace** (`rasa.tenant.rasaos`) — already runs the pipeline by
-  hand; would be dogfooding its own distillation.
-- **domain-writer** — already has the richest hand-rolled version; adopting
-  the module would prove the seam against a real, divergent second vertical
-  (the decisive test: does the spine survive a second consumer without
-  warping? If yes, the horizontal thesis holds; if the seam needs
-  reshaping, we were distilling an instance).
-
-Building the skills before that second consumer would repeat the exact
-premature-abstraction trap that `module.billing` is deferred to avoid.
-
----
-
-## Version plan
-
-- **v0.1.0 (this)** — spine (`notes-rules.md`) + spec (this file) + seam
-  template + ledger templates. No skills. Pushed public (RasaOS/module-notes).
-- **v0.2.0** — M-1..M-3 skills authored, once a second consumer declares
-  the module. `bin/init` smoke-tested into that consumer. Push then.
-- **v1.0.0** — the seam format + install shape locked after the pipeline
-  has run through at least two real verticals unchanged.
+- **0.2.0** — this: the full notes + decision ledger to the records-family/1
+  standard. Local branch; merge/tag/push on the owner's go-ahead.
+- **0.2.x** — fixes from the first real consumer.
+- **1.0.0** — the record shapes, the seam and the install layout locked,
+  after at least two real projects have run notes unchanged. A shape change
+  after that is a major version with a migration tool, as in
+  `rasa.module.tasks`.

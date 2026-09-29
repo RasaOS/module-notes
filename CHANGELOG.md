@@ -4,6 +4,75 @@ Reverse-chronological. Each entry is a version bump.
 
 ---
 
+## 0.2.0 — 2026-09-28 — notes, notebooks and an enforced decision ledger (records-family/1)
+
+**Breaking.** The ledger shape changes from two markdown files to one file per
+record. **No migration is needed:** no project has installed 0.1.x (every
+`rasa.lock.json` and `rasa.json` on the workspace volume and under the home
+directory was searched on 2026-09-28 — none declares or pins this module).
+
+Owner direction: *"we need modules for each of the following… notes, calendar
+events, messages, contacts — as much structure and organization as we can
+get."* The owner chose to **extend** this module rather than add a separate
+notes module, and to build it to the `rasa.module.tasks` v1.0.0 standard.
+Built together with `rasa.module.schedule` 0.2.0, `rasa.module.crm` 0.2.0 and
+the new `rasa.module.messages` 0.1.0 as one family.
+
+### Added
+
+- **Notes** — `notes/<notebook>/NOTE-nnnn-<slug>.md`: notebooks as
+  directories (≤ 3 levels), tags, types, pins, `about` links to any family
+  record, `source`, `[[wiki-links]]`, family-wide backlinks, archive/restore,
+  and idempotent daily notes (`notes today`).
+- **The decision ledger, enforced** — `notes/decisions/DEC-nnnn-<slug>.md`:
+  required `## Basis`, declared categories, `sources`, frozen from the moment
+  it is recorded (only `updated` / `promoted_to` / `promoted` may change),
+  supersession recorded on the newer decision with "superseded" derived.
+- **Canon promotion as a recorded act** — `notes canonize` stamps
+  `promoted_to` + `promoted`; hard-stops until `canon_target` is declared in
+  `notes/notes.config.yml`; never writes canon itself.
+- **Two programs** — `.claude/bin/notes` (13 write verbs, 9 read verbs; each
+  write is one atomic act under a lock: record + history line + content
+  cache) and `.claude/bin/check-notes` (F-01…F-27 family invariants +
+  N-01…N-10; `--fix` repairs history drift and never invents a person or a
+  date).
+- **JSON Schemas** for the note, the decision and the config, installed under
+  `.claude/schemas/notes/` and evaluated by the validator.
+- **`records.py`** — the records-family/1 core (strict-YAML grammar and
+  serializer, schema evaluator, history, content cache, locking, family-wide
+  reference resolution), byte-identical across the four family modules.
+- **`notes/history.tsv`**, **`notes/notes.config.yml`** (declare to
+  constrain: notebooks, types, tags, categories, actors), and the reworked
+  `.claude/notes-canon.md` seam (judgement only; its machine half moved into
+  the config).
+- **Skills** `/note` and `/decide`.
+- **Release gate** — `bin/check-manifest` now runs 14 checks: the nine from
+  `rasa.module.tasks` plus family lockstep (core + family block against
+  `FAMILY`, compared with every sibling on disk), offline (no network or
+  process import in shipped code), schema well-formedness, executable bits,
+  and the test suite (which includes an install smoke through `bin/init`).
+- **Tests** — `tests/test_records_core.py` (family core; identical in all four
+  modules; includes a PyYAML agreement check over ~50 adversarial scalars)
+  and `tests/test_notes_cli.py` (walkthrough, refusals, every invariant,
+  install smoke).
+
+### Removed
+
+- `notes/WORKING.md` and `notes/DECISIONS.md` seeds — replaced by per-record
+  files.
+- The `/sync`, `/promote` and `/whoami` skills, the kit/ source clone in the
+  consumer tree, the `.claude/rasa-identity.md` stamp and the
+  `.claude/rasa-deployment.md` seed — on the `rasa.module.tasks` v1.0.0
+  precedent: a mounted module must not claim skill names or identity files a
+  parent owns, and this module's own promotion verb collided with `/promote`.
+
+### Changed
+
+- The skill-build gate ("hold until a second consumer declares the module")
+  was lifted by the owner's direct request, not by a consumer appearing. The
+  1.0.0 bar — two real projects running the shape unchanged — still stands.
+- Permissions add `shell:exec` (the installed programs are run).
+
 ## 0.1.3 — 2026-07-09
 
 ### Element identity layer (canon SA-025)

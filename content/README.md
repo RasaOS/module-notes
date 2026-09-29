@@ -1,46 +1,29 @@
-# `rasa.module.notes` — content
+# content/ — what `rasa.module.notes` installs
 
-What this module ships and where it installs. This file is author-time
-documentation (not installed into consumer projects).
+Everything under `content/` is Element-owned: refreshed on every upgrade,
+never project state. `bin/init` reads `rasa.json` and applies each entry by
+its policy; this table mirrors the manifest and must change with it.
 
-## The one-liner
-
-The **institutional-memory** module: the three-tier
-working-note → durable-decision → canon promotion pipeline, as portable
-git-versioned markdown. Human-authored, ordered, ratified — the Element-layer
-counterpart to the kernel's similarity-recall memory (which
-`rasa.module.ingest` wraps).
-
-## What installs where
-
-| Source | Installs to | Policy | What it is |
+| from | to | policy | what |
 |---|---|---|---|
-| `content/notes-rules.md` | `.claude/notes-rules.md` | file-replace | The spine — the three tiers, promotion discipline, the kernel-memory boundary. Element-owned; refreshed on upgrade. |
-| `seed/notes-canon.md.template` | `.claude/notes-canon.md` | skip-if-exists | **The seam** — where canon lives + categories + promotion criteria. Project-owned; `/promote` hard-stops until filled. |
-| `seed/notes/DECISIONS.md.template` | `notes/DECISIONS.md` | skip-if-exists | Tier-2 decision-log ledger. Project-owned; append-only. |
-| `seed/notes/WORKING.md.template` | `notes/WORKING.md` | skip-if-exists | Tier-1 working-notes ledger. Project-owned. |
-| `seed/rasa.lock.json.template` | `.claude/rasa.lock.json` | init-only-with-sha | Connection-Contract lockfile, SHA-stamped at init. |
+| `content/notes-rules.md` | `.claude/notes-rules.md` | file-replace | the law: the records-family/1 conventions + the notes law |
+| `content/schemas/` | `.claude/schemas/notes/` | directory-mirror | JSON Schemas: note, decision, config |
+| `content/skills/` | `.claude/skills/` | directory-mirror | `/note`, `/decide` |
+| `content/bin/` | `.claude/bin/` | directory-mirror | `notes`, `check-notes`, and the `rasa_notes/` package |
+| `content/README.md` | — | opt-in | this file (not installed) |
+| `content/BUILD_PLAN.md` | — | opt-in | the design record (not installed) |
 
-Plus `notes/archive/` scaffolded empty (monthly working-note archive).
+Project-owned, copied once (`seed/`, never overwritten):
 
-## What is NOT here yet
+| from | to | policy |
+|---|---|---|
+| `seed/notes-canon.md.template` | `.claude/notes-canon.md` | skip-if-exists |
+| `seed/notes/notes.config.yml.template` | `notes/notes.config.yml` | skip-if-exists |
+| `seed/notes/history.tsv.template` | `notes/history.tsv` | skip-if-exists |
+| `seed/notes/inbox/.keep` | `notes/inbox/.keep` | skip-if-exists |
+| `seed/notes/decisions/.keep` | `notes/decisions/.keep` | skip-if-exists |
+| `seed/rasa.lock.json.template` | `.claude/rasa.lock.json` | init-only-with-sha |
 
-The `/note`, `/notes`, `/decide`, `/promote` **skills** — they are the build
-phase. See [`BUILD_PLAN.md`](BUILD_PLAN.md) for their contracts and the
-extract-after-proof gate that holds them until a real second consumer
-declares the module.
-
-## The shape
-
-Toolkit module, `requires.parent_kind: [domain, orchestrator]`. Pure
-Element-layer convention — no kernel engine (contrast `module.ingest`, whose
-engine is the kernel's DocumentManager). Cross-refs to kernel memory,
-`module.tasks`, and `module.jobs` are all soft (present-if-mounted).
-
-## See also
-
-- [`BUILD_PLAN.md`](BUILD_PLAN.md) — the full spec + build plan.
-- `content/notes-rules.md` — the installed spine.
-- `elements/module-ingest/` — the sibling that wraps the kernel's *other*
-  memory primitive; the boundary between them is load-bearing.
-- Canon `ELEMENT_CONTRACT.md` §7 — install policies.
+`content/bin/rasa_notes/records.py` is the records-family/1 core, byte-identical
+in notes, schedule, crm and messages; `content/bin/rasa_notes/FAMILY` records
+its hash and the hash of the family block in `notes-rules.md`.

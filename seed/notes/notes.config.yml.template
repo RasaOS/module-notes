@@ -1,0 +1,60 @@
+# notes/notes.config.yml — what this project declares to rasa.module.notes.
+#
+# PARSING. Read by the same strict parser as every note (records-family/1):
+#   * comments are WHOLE lines. A '#' after a value is an error, not a comment.
+#   * a value is text, a flow list [a, b], or omitted. To say nothing, omit the key.
+#
+# Every key except `schema` is optional, and a project with no config file at
+# all is valid — with ONE exception: `notes canonize` refuses until
+# `canon_target` is declared (see .claude/notes-canon.md for why).
+#
+# DECLARE TO CONSTRAIN. Every list below works the same way: leave it empty
+# and anything well-formed is accepted; fill it and it becomes a closed
+# vocabulary the validator holds every record to.
+
+schema: rasa.module.notes/1
+
+
+# default_notebook — where `notes new` files a note given no --in.
+# default_notebook: inbox
+
+# journal_notebook — where `notes today` keeps one note per day.
+# journal_notebook: journal
+
+
+# notebooks — the notebook paths notes may live in (up to three levels).
+# Empty: any lower-case path works and notebooks appear as you file into them.
+#   notebooks: [inbox, journal, work, work/clients, personal, reference]
+notebooks: []
+
+# types — what kind of note (optional on every note).
+#   types: [meeting, call, idea, reference, journal]
+types: []
+
+# tags — many-to-many labels.
+#   tags: [urgent, follow-up, acme]
+tags: []
+
+
+# categories — decision categories. Declared => every decision must carry one.
+#   a software project:  categories: [architecture, process, tooling, convention]
+#   a novel:             categories: [canon, character, plot, voice, structure]
+#   a firm:              categories: [strategy, engagement, conflicts, billing]
+categories: []
+
+
+# canon_target — THE HARD-STOP. Where a decision becomes law in this project:
+# one or more files or directories. `notes canonize DEC-nnnn --to <target>`
+# records that a decision was promoted there (optionally `<target>#section`).
+# The tool never writes canon itself; you make that edit, it records it.
+#   canon_target: [CLAUDE.md]
+#   canon_target: [bible/, style-guide.md]
+# canon_target: []
+
+
+# actors — who may appear in created_by and the history. Empty: any handle.
+#   actors: [chazz, claude]
+actors: []
+
+# default_actor — used when neither --by nor $RASA_ACTOR is given.
+# default_actor: chazz

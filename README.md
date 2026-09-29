@@ -2,57 +2,72 @@
 
 **Canonical name:** `rasa.module.notes`
 **Repo / folder:** `module-notes`
-**Kind:** `module` (canon Spec §6)
-**Contract:** Element Contract v1.3.0
-**Version:** 0.1.0 (spine + spec + seam; skills are the build phase)
-**Status:** Pushed — [RasaOS/module-notes](https://github.com/RasaOS/module-notes) (public). Skill build gated on a real second consumer.
+**Kind:** `module` (mounts into a `domain` or a `tenant`)
+**Contract:** Element Contract v1.3.0 · records-family/1
+**Version:** 0.2.0
+**Status:** 0.2.0 built on branch `claude/records-family`; 0.1.3 is the published tag on [RasaOS/module-notes](https://github.com/RasaOS/module-notes).
 
 ## What this is
 
-The **institutional-memory** module — the three-tier
-working-note → durable-decision → canon promotion pipeline, as portable
-git-versioned markdown. Human-authored, ordered, ratified: the Element-layer
-counterpart to the kernel's similarity-recall memory (which
-`rasa.module.ingest` wraps).
+Notes and the decision ledger, one record per file:
 
-Distilled from three independent RasaOS reimplementations of the *same*
-pipeline — domain-writer (`decisions.md` → bible), domain-code (`/decision`
-+ `/codify` → `CLAUDE.md`), and this workspace (working notes → AUDIT +
-decisions → canon). It was the one wave-2 admin-module candidate that
-cleared both the portfolio synthesis and the adversarial critic (see
-`content/BUILD_PLAN.md`).
-
-## The three tiers
+- **Notes** in **notebooks** (directories, up to three levels), with tags,
+  types, pins, links to any record in the family, archive/restore, and one
+  daily note per day.
+- **Decisions** — rulings recorded so they are not argued again: a basis, a
+  category, the notes or threads they came from. Frozen once recorded;
+  changed only by being superseded.
+- **Canon** — when a decision becomes the project's law, `notes canonize`
+  records where. It never writes canon itself, and it refuses until the
+  project has declared where canon lives.
 
 ```
-working note  ──/decide──▶  durable decision  ──/promote──▶  canon
-(cheap, transient)          (ratified, ordered)              (authoritative)
+note  ──notes decide──▶  decision  ──notes canonize──▶  canon
 ```
 
-The value is the promotion discipline between tiers. Where "canon" lives —
-the one thing that varies per vertical — is the project-owned
-`.claude/notes-canon.md` seam; `/promote` hard-stops until it's filled.
+## The records family
 
-## Status / scope
+One of four modules built to one standard — **records-family/1** — with
+`rasa.module.schedule` (the calendar), `rasa.module.crm` (the address book,
+accounts and sales funnel) and `rasa.module.messages` (email, texts, chat,
+calls, voicemail, letters). Same file grammar, same history log, same
+validator conventions, and references that resolve across all four when they
+are mounted together. The shared core (`records.py`) is byte-identical in
+each, and each module's release gate proves it.
 
-- **v0.1.0 (this):** the spine (`content/notes-rules.md`), the spec
-  (`content/BUILD_PLAN.md`), the seam template, and the ledger templates.
-- **Deferred to v0.2.0:** the `/note`, `/notes`, `/decide`, `/promote`
-  skills — held until a real second consumer declares the module in its
-  `requires.elements[]` (the `module.tasks` extract-after-proof precedent).
+## Install
 
-## Boundary (read this)
+```bash
+bin/init /path/to/project
+```
 
-Not the kernel's semantic memory. Facts recalled by *similarity* are
-`module.ingest` `/remember` / `memory_store`. This module is ordered,
-human-ratified, provenance-first: it answers "**why** did we decide X",
-not "**what** is relevant to this query." The two are soft siblings, not
-substitutes.
+Installs `.claude/notes-rules.md`, `.claude/schemas/notes/`, the `/note` and
+`/decide` skills, and two programs — `.claude/bin/notes` and
+`.claude/bin/check-notes` — plus the project-owned `notes/` ledger and the
+`.claude/notes-canon.md` seam. Pure Python 3 standard library: nothing else
+to install, no network, no version control needed.
 
-## See also
+```bash
+.claude/bin/notes new "Kickoff with Acme" --in work/clients --tag acme
+.claude/bin/notes today
+.claude/bin/notes decide "Quote Acme on tiered pricing" --basis "Flat undercharged." --from NOTE-0001
+.claude/bin/check-notes
+```
 
-- `content/BUILD_PLAN.md` — full spec, skill contracts, the deferral gate.
-- `content/notes-rules.md` — the installed spine.
-- `~/rAI/rasa-os/elements/module-ingest/` — the sibling wrapping the kernel's
-  similarity-recall memory.
-- `~/rAI/rasa-os/elements/REGISTRY.md` — the live workspace snapshot.
+## Boundary
+
+Not similarity memory. Facts recalled by meaning belong to the kernel's
+memory (`rasa.module.ingest` `/remember`). This module is ordered,
+human-ratified and provenance-first: it answers "**why** did we decide X",
+not "what is relevant to this query".
+
+## Layout
+
+- `content/notes-rules.md` — the installed law (family conventions + notes law)
+- `content/schemas/` — note, decision and config JSON Schemas
+- `content/bin/` — the `notes` tool, the `check-notes` validator, the `rasa_notes` package
+- `content/skills/` — `/note`, `/decide`
+- `seed/` — the project-owned seam, config, history header and notebook placeholders
+- `content/BUILD_PLAN.md` — the design record
+- `bin/check-manifest` — the release gate (14 checks); `bin/init` — the installer
+- `tests/` — the family-core suite (identical in all four modules) and the notes suite

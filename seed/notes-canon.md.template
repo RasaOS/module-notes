@@ -1,67 +1,50 @@
-# Notes canon — project adapter seam
+# Notes canon — this project's seam for rasa.module.notes
 
-This file is **project-owned**. `rasa.module.notes` copies it once at
-install (`skip-if-exists`) and never overwrites it. It is the one thing the
-module cannot know for you: **where a promoted decision becomes law in
-THIS project, and what your promotion rules are.**
+This file is **project-owned**. `rasa.module.notes` copied it once at install
+(`skip-if-exists`) and will never overwrite it. It holds the judgement the
+module cannot make for you: **what "canon" means here, and what a note has to
+survive before it becomes a decision, or a decision before it becomes law.**
 
-`/promote` reads this file and **hard-stops** if `canon_target` is unset —
-guessing where a decision becomes authoritative is the one inference the
-module refuses to make.
+The machine half of the seam — the list of canon targets and the decision
+categories — lives in `notes/notes.config.yml` (`canon_target`,
+`categories`), because the tools check it. `notes canonize` **hard-stops**
+until `canon_target` is declared: guessing where a decision becomes law is
+the one inference this module refuses to make.
 
 Fill in the three sections. Honest defaults are shown; replace them.
 
 ---
 
-## canon_target
+## 1. What canon is here
 
-Where a promoted decision lands — the project's authoritative layer.
-One or more files/dirs. Examples from real RasaOS verticals:
+Name the authoritative layer every other piece of work is checked against,
+and why it is the authority. Examples from real RasaOS projects:
 
-- fiction project:   `bible/`            (world facts all drafting obeys)
-- software project:  `CLAUDE.md`         (or `.claude/task-rules.md`)
-- this workspace:    `canon/<version>/canon/`
+- a novel: the story `bible/` — world facts every draft obeys.
+- a software project: `CLAUDE.md` and `.claude/task-rules.md` — the rules the
+  assistant follows.
+- a firm: the engagement letter and the matter's standing instructions.
 
-```
-canon_target:
-  # - CLAUDE.md
-  # - docs/decisions/
-```
+> _Not yet declared._
 
-(Leave commented / empty until you set it. `/promote` will refuse until at
-least one target is present.)
+## 2. Promotion criteria
 
----
+When does a note earn a decision, and a decision earn canon? The module's
+defaults (in `.claude/notes-rules.md`) are:
 
-## categories
+- **note → decision:** the point has been questioned at least once and held;
+  it now constrains future work; its basis can be stated in a sentence.
+- **decision → canon:** it has been stable across several work sessions,
+  other decisions depend on it, and reversing it would be expensive.
 
-The decision categories for tier-2 `notes/DECISIONS.md`. `/decide` requires
-one per decision. Defaults to `general` if you leave this empty. Real
-examples:
+Override or tighten them here. Leave this section as-is to use the defaults.
 
-- writer: `canon | character | plot | voice | period | structure | process`
-- code:   `architecture | process | tooling | convention | dependency`
+## 3. Hard gates (optional)
 
-```
-categories:
-  - general
-```
+Anything that must happen before a promotion, which the assistant must check
+and refuse without. Example (a canon-authoring workspace):
 
----
+> A canon change requires a canon task in `canon/tasks/` first. Refuse to
+> canonize and point at the task workflow until one exists.
 
-## promotion_criteria
-
-Optional. Overrides the module's defaults (in `.claude/notes-rules.md`):
-"working → decision when questioned-and-held; decision → canon when
-stable-and-depended-on." Add a project hard-gate here if promotion has one.
-
-Example hard-gate (this workspace's rule):
-
-```
-promotion_criteria:
-  decision_to_canon:
-    hard_gate: "A canon change requires a canon task in canon/tasks/ first.
-                /promote must refuse and point at the task workflow."
-```
-
-Leave empty to use the defaults.
+> _None declared._
